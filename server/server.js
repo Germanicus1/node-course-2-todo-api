@@ -7,6 +7,7 @@ let {Todo} = require('./models/todo');
 let {User} = require('./models/user');
 
 let app = express();
+const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
@@ -47,24 +48,8 @@ app.get('/todos/:id', (req, res) => {
   }
 });
 
-  // if (!ObjectID.isValid(id)) {
-  //   return console.log('ID is not valid!')
-  // }
-
-
-  // validate id using isValid
-    // 404 - send back empty body
-
-  // findById
-    // success
-      // if todo - send it back
-      // if no todo - send back 404 with empty body
-    // error
-      // 400 - send empty body
-
-
-app.listen(3000, () => {
-  console.log('Started on port 3000');
+app.listen(port, () => {
+  console.log(`Started on port ${port}`);
 });
 
 module.exports = {app};
