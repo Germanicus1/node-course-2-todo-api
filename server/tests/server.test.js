@@ -5,22 +5,25 @@ const {ObjectID} = require('mongodb');
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
 
+ //#region Seed data
 const todos = [{
   _id: new ObjectID(),
-  text: 'First test todo'
+  text: 'First test todo',
 }, {
   _id: new ObjectID(),
-  text: 'Second test todo'
+  text: 'Second test todo',
+  completed: true,
+  completedAt: 333
 }];
 
-describe('POST /todos', () => {
+beforeEach((done) => {
+  Todo.deleteMany({}).then(() => {
+    return Todo.insertMany(todos);
+  }).then(() => done());
+});
+//#endregion Seed data
 
-  beforeEach((done) => {
-    Todo.deleteMany({}).then(() => {
-      return Todo.insertMany(todos);
-    }).then(() => done());
-  });
-  
+describe('POST /todos', () => { //#region 
   it('should create a new todo', (done) => {
     let text = 'Test todo-text';
 
@@ -60,9 +63,9 @@ describe('POST /todos', () => {
         }).catch((e) => done(e));
       });
   })
-});
+}); //#endregion
 
-describe('GET /todos', () => {
+describe('GET /todos', () => { //#region 
   it('should get all todos', (done) => {
     request(app)
       .get('/todos')
@@ -72,9 +75,9 @@ describe('GET /todos', () => {
       })
       .end(done);
   })
-})
-
-describe('GET /todos/:id', () => {
+}); //#endregion
+ 
+describe('GET /todos/:id', () => { //#region 
   it('should return todo doc', (done) => {
     request(app)
       .get(`/todos/${todos[0]._id.toHexString()}`)
@@ -99,10 +102,9 @@ describe('GET /todos/:id', () => {
       .expect(404)
       .end(done);
     });
-});
+}); //#endregion
 
-
-describe('DELETE /todos/:id', () => {
+describe('DELETE /todos/:id', () => { //#region 
   it('should remove a todo', (done) => {
     let hexid = todos[1]._id.toHexString();
 
@@ -122,7 +124,7 @@ describe('DELETE /todos/:id', () => {
           done();
         }).catch((e) => done(e));
       });
-});
+  });
 
   it('should return 404 if todo not found', (done) => {
     const id = new ObjectID();
@@ -139,5 +141,45 @@ describe('DELETE /todos/:id', () => {
       .expect(404)
       .end(done);
   });
+}); //#endregion
 
-});
+describe('PATCH /todos/:id', () => { //#region 
+  it('should update the todo', (done) => {
+    let hexid = todos[0]._id.toHexString();
+    let text = 'This is an updated text';
+
+    request(app)
+      .patch(`/todos/${hexid}`)
+      .send({
+        completed: true,
+        text
+      })
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.todo.text).toBe(text);
+        expect(res.body.todo.completed).toBe(true);
+        expect(typeof res.body.todo.completedAt).toBe('number');
+      })
+      .end(done);
+  });
+
+  it('should clear completedAt when todo is not completed', (done) => {
+    let hexid = todos[1]._id.toHexString();
+    let text = 'This is an updated text';
+
+    request(app)
+      .patch(`/todos/${hexid}`)
+      .send({
+        completed: false,
+        text
+      })
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.todo.text).toBe(text);
+        expect(res.body.todo.completed).toBe(false);
+        expect(res.body.todo.completedAt).toBe(null);
+        
+      })
+      .end(done);
+  });
+}); //#endregion
